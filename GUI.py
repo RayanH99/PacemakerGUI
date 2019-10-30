@@ -93,6 +93,8 @@ class LoginPage(tk.Frame):
 
     def __Reference__(self):
         global userData
+        global userOutput
+        userOutput = ""
 
         if(not (os.stat("userData.txt").st_size == 0)):
             file = open("userData.txt", "r")
@@ -131,6 +133,7 @@ class createUser():
     def __init__(self, user, password):
         self.user = user
         self.password = password
+        self.userOutput = ""
 
         # multiply each pacing mode by 8 to be able to store each of the desired parameters
         self.parameters = {}
@@ -147,6 +150,9 @@ class createUser():
 
     def getParam(self):
         return self.parameters
+
+    def getUserOutput(self):
+        return self.userOutput
 
 
 class RegisterPage(tk.Frame):
@@ -245,9 +251,6 @@ class afterLogin(tk.Frame):
         global dropList
         dropList = []
 
-        global currentDropList
-        currentDropList= []
-
         logoutButton = tk.Button(self, text="Logout", command=lambda: self.controller.show_frame(WelcomePage))
         logoutButton.grid(row=0,column=1, pady=20)
 
@@ -265,7 +268,7 @@ class afterLogin(tk.Frame):
 
     def __List__(self, *args):
         global dropList
-        global currentDropList
+
         mode = dropOption.get()
         rowIndex = 5
 
@@ -274,10 +277,6 @@ class afterLogin(tk.Frame):
                 dropList[i].grid_remove()
             dropList = []
 
-        if(currentDropList):
-            for i in range(len(currentDropList)):
-                currentDropList[i].grid_remove()
-            currentDropList = []
         counter = 0
 
         for i in range(len(parameters)):
@@ -293,21 +292,88 @@ class afterLogin(tk.Frame):
                 counter += 1
                 rowIndex += 1
 
+    def __getParams__(self, *args):
+        global validParameters
+        validParameters = {
+            'Lower Rate Limit': [str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 91, 1)]+[str(x) for x in range(90, 180, 5)],
+            'Upper Rate Limit': [str(x) for x in range(50, 180, 5)],
+            'Atrial Amplitude': ['O']+[str(x*0.1) for x in range(5, 36, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
+            'Ventricular Amplitude': ['O']+[str(x*0.1) for x in range(5, 33, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
+            'Atrial Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 20, 1)],
+            'Ventricular Pusle Width': ['0.05']+[str(x*0.1) for x in range(1, 20, 1)],
+            'VRP': [str(x) for x in range(150, 500, 10)],
+            'ARP': [str(x) for x in range(150, 500, 10)]
+        }
 
-    #CONTINUE FROM HERE
-    #FIND OUT IF YOU NEED TO UPDATE PARAMETERS AND SEND THEM TO AN OUTPUT FILE!
-    #IF YOU DONT NEED TO THEN START AND FINISH REPORT!!
-    """ 
+        mode = dropOption.get()
+        
+        for i in range(1, len(dropList), 2):
+            if(dropList[i].get() in validParameters[dropList[i-1]['text']]):
+                userData[currentUser].parameters[mode][parameters.index(dropList[i-1]['text'])] = dropList[i].get()
+            else:
+                messagebox.showwarning("Error!", "Invalid parameter values!")
+                break
+
     def __storeParamsData__(self, *args):
         file = open("parametersData.txt", "w")
         for i in userData:
-            file.write(userData[i].getOutputData()+"\n")
+            file.write(userData[i].getUserOutput()+"\n")
         file.close()
 
     def __updateParams__(self, *args):
-    
-    """
+        self.__getParams__()
+        mode = dropOption.get()
 
-   
+        for i in userData:
+            if(i == currentUser): 
+                userData[currentUser].userOutput = i+","
+
+                for mode in PacingModes:  
+                    if(mode == 'AOO'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0
+                        
+                        for k in PacingModes['AOO']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'VOO'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0
+                        
+                        for k in PacingModes['VOO']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'AAI'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0
+                        
+                        for k in PacingModes['AAI']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'VVI'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['VVI']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+        
+        self.__storeParamsData__()
+    
 GUI().mainloop()
         
