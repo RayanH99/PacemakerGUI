@@ -1,11 +1,15 @@
 import tkinter as tk
 from tkinter import messagebox
 import os
+import serial
+import struct
+import time
 
 titleFont = ("Verdana", 12)
 
 
 class GUI(tk.Tk):
+
 
     def __init__(self, *args, **kwargs):
 
@@ -28,6 +32,7 @@ class GUI(tk.Tk):
 
         self.show_frame(WelcomePage)
 
+
     def show_frame(self, cont):
 
         frame = self.frames[cont]
@@ -35,6 +40,7 @@ class GUI(tk.Tk):
 
 
 class WelcomePage(tk.Frame):
+
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -59,6 +65,7 @@ class WelcomePage(tk.Frame):
 
 class LoginPage(tk.Frame):
 
+
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
@@ -68,7 +75,7 @@ class LoginPage(tk.Frame):
         global userData
         global parameters
         ## Currently only storing 8 of the 18 parameters! Assignment 2 will expand on these params
-        parameters = ['Lower Rate Limit', 'Upper Rate Limit', 'Atrial Amplitude', 'Ventricular Amplitude', 'Atrial Pulse Width', 
+        parameters = ['Lower Rate Limit', 'Upper Rate Limit', 'Fixed AV Delay', 'Atrial Amplitude', 'Ventricular Amplitude', 'Atrial Pulse Width', 
                       'Ventricular Pusle Width', 'VRP', 'ARP']
 
         tk.Label(self, text=" ").pack()
@@ -90,6 +97,7 @@ class LoginPage(tk.Frame):
         button2.pack(padx=30, pady=10)
 
         ## add next page ref
+
 
     def __Reference__(self):
         global userData
@@ -114,6 +122,7 @@ class LoginPage(tk.Frame):
 
         return userData
 
+
     def __Login__(self, user, password):
         userData = self.__Reference__()
         if user in userData:
@@ -126,10 +135,13 @@ class LoginPage(tk.Frame):
         else:
             messagebox.showwarning("Error!", "Invalid login credentials!")
 
+
     def nextPage(self, next):
         self.controller.show_frame(next)
 
 class createUser():
+  
+  
     def __init__(self, user, password):
         self.user = user
         self.password = password
@@ -137,25 +149,31 @@ class createUser():
 
         # multiply each pacing mode by 8 to be able to store each of the desired parameters
         self.parameters = {}
-        self.parameters['AOO'] = ['0']*8
-        self.parameters['VOO'] = ['0']*8
-        self.parameters['AAI'] = ['0']*8
-        self.parameters['VVI'] = ['0']*8
+        self.parameters['AOO'] = ['0']*9
+        self.parameters['VOO'] = ['0']*9
+        self.parameters['AAI'] = ['0']*9
+        self.parameters['VVI'] = ['0']*9
+        self.parameters['DOO'] = ['0']*9
+
 
     def getUser(self):
         return self.user
 
+
     def getPassword(self):
         return self.password
 
+
     def getParam(self):
         return self.parameters
+
 
     def getUserOutput(self):
         return self.userOutput
 
 
 class RegisterPage(tk.Frame):
+
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -184,6 +202,7 @@ class RegisterPage(tk.Frame):
 
         button2 = tk.Button(self, text="Return to welcome!", width=15, height=3, command=lambda: controller.show_frame(WelcomePage))
         button2.pack(padx=30, pady=10)
+
 
     def __RegisterUser__(self, user, password):
         global userData
@@ -233,16 +252,19 @@ class RegisterPage(tk.Frame):
         return True
 
 class afterLogin(tk.Frame):
+
+
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         
         self.controller = controller
         global PacingModes
         PacingModes = { 
-            'AOO': [1, 1, 1, 0, 1, 0, 0, 0],
-            'VOO': [1, 1, 0, 1, 0, 1, 0, 0],
-            'AAI': [1, 1, 1, 0, 1, 0, 0, 1],
-            'VVI': [1, 1, 0, 1, 0, 1, 1, 0]
+            'AOO': [1, 1, 0, 1, 0, 1, 0, 0, 0],
+            'VOO': [1, 1, 0, 0, 1, 0, 1, 0, 0],
+            'AAI': [1, 1, 0, 1, 0, 1, 0, 0, 1],
+            'VVI': [1, 1, 0, 0, 1, 0, 1, 1, 0],
+            'DOO': [1, 1, 1, 1, 1, 1, 1, 0, 0]
         }
 
         global dropOption
@@ -250,6 +272,9 @@ class afterLogin(tk.Frame):
 
         global dropList
         dropList = []
+
+        global currentDropList
+        currentDropList = []
 
         logoutButton = tk.Button(self, text="Logout", command=lambda: self.controller.show_frame(WelcomePage))
         logoutButton.grid(row=0,column=1, pady=20)
@@ -266,17 +291,17 @@ class afterLogin(tk.Frame):
         dropOption.set('   ')
         tk.OptionMenu(self, dropOption, *PacingModes.keys(), command=self.__List__).grid(row=3, column=1)
 
-    def __List__(self, *args):
+
+    def __otherList__(self, *args):
         global dropList
 
         mode = dropOption.get()
-        rowIndex = 5
+        rowIndex = 4
 
         if(dropList):
             for i in range(len(dropList)):
                 dropList[i].grid_remove()
             dropList = []
-
         counter = 0
 
         for i in range(len(parameters)):
@@ -292,11 +317,14 @@ class afterLogin(tk.Frame):
                 counter += 1
                 rowIndex += 1
 
+    ##########################################################################################################################################################
+    ## FIX THIS AND ADD NOTIFICATION FOR INVALID PARAMETERS!!!
     def __getParams__(self, *args):
         global validParameters
         validParameters = {
             'Lower Rate Limit': [str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 91, 1)]+[str(x) for x in range(90, 180, 5)],
             'Upper Rate Limit': [str(x) for x in range(50, 180, 5)],
+            'Fixed AV Delay': [str(x) for x in range(70, 300, 10)],
             'Atrial Amplitude': ['O']+[str(x*0.1) for x in range(5, 36, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
             'Ventricular Amplitude': ['O']+[str(x*0.1) for x in range(5, 33, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
             'Atrial Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 20, 1)],
@@ -310,15 +338,121 @@ class afterLogin(tk.Frame):
         for i in range(1, len(dropList), 2):
             if(dropList[i].get() in validParameters[dropList[i-1]['text']]):
                 userData[currentUser].parameters[mode][parameters.index(dropList[i-1]['text'])] = dropList[i].get()
+                currentDropList[i].config(text=str(dropList[i].get()))
             else:
                 messagebox.showwarning("Error!", "Invalid parameter values!")
                 break
+
+    ##########################################################################################################################################################
+    def __serialCommunication__(self, *args):
+
+        serialPacemaker = serial.Serial('INSERT SERIAL PORT HERE I.E. COM3', 115200) ## default baudrate for serial communication is 115200
+
+        serialPacemaker.isOpen()
+        print("Serial port has been opened!")
+
+        time.sleep(2)
+
+        selectedPacingMode = dropOption.get()
+        arrayToSend = userData[currentUser].parameters[selectedPacingMode]
+        tempMode = selectedPacingMode
+        
+        # set integer value for selected pacing mode
+        if tempMode == "AOO":
+            MODE = 1
+        elif tempMode == "VOO":
+            MODE = 2
+        elif tempMode == "AAI":
+            MODE = 3
+        elif tempMode == "VVI":
+            MODE = 4
+        elif tempMode == "DOO":
+            MODE = 5
+
+        ##########################################################################################################################################################
+        ## HAVE TO FIX THIS
+        arrayToSend = [22, 1, MODE]+arrayToSend
+
+        for i in range(3, 16):
+            arrayToSend[i] = float(arrayToSend[i])
+
+        for i in range(16, 21):
+            arrayToSend[i] = int(arrayToSend[i])
+
+        bytesToSend = struct.pack('BBBdddddddddddddBBBBB')
+        serialPacemaker.write(bytesToSend)
+        print("Data sent")
+        serialPacemaker.close()
+
+        ##########################################################################################################################################################
+
+
+    def __List__(self, *args):
+        # global pacing mode to keep track of
+        global dropList
+        global currentDropList
+        selectedPacingMode = dropOption.get()
+        rowIndex = 5
+
+        if(dropList):
+            for i in range(len(dropList)):
+                dropList[i].grid_remove()
+            dropList = []
+        if(currentDropList):
+            for i in range(len(currentDropList)):
+                currentDropList[i].grid_remove()
+            currentDropList = []
+        counter = 0
+
+        for i in range(len(parameters)):  # set new parameters
+            if(PacingModes[selectedPacingMode][i] == 1):
+                dropList.append(tk.Label(self, text=parameters[i]))
+                dropList[counter].grid(row=rowIndex, column=0)
+                
+                counter += 1
+
+                dropList.append(tk.Entry(self, textvariable=tk.StringVar()))
+                dropList[counter].grid(row=rowIndex, column=1)
+
+                counter += 1
+                rowIndex += 1
+
+        ##########################################################################################################################################################
+        rowIndex += 1
+        counter = 0
+
+        currentDropList.append(tk.Label(self, text='Current Values', font=("Calibri", 15)))
+        currentDropList[counter].grid(row=rowIndex, column=0, pady=20)
+        
+        counter += 1
+        
+        currentDropList.append(tk.Button(self, text="Send to Pacemaker", command=self.__serialCommunication__))
+        currentDropList[counter].grid(row=rowIndex, column=1)
+        
+        counter += 1
+        rowIndex += 1
+
+        for i in range(len(parameters)):  # set new parameters
+            if(PacingModes[selectedPacingMode][i] == 1):
+
+                currentDropList.append(tk.Label(self, text=parameters[i]))
+                currentDropList[counter].grid(row=rowIndex, column=0)
+
+                counter += 1
+
+                currentDropList.append(tk.Label(self, text=str(userData[currentUser].parameters[selectedPacingMode][i])))
+                currentDropList[counter].grid(row=rowIndex, column=1)
+
+                counter += 1
+                rowIndex += 1
+
 
     def __storeParamsData__(self, *args):
         file = open("parametersData.txt", "w")
         for i in userData:
             file.write(userData[i].getUserOutput()+"\n")
         file.close()
+
 
     def __updateParams__(self, *args):
         self.__getParams__()
@@ -367,6 +501,17 @@ class afterLogin(tk.Frame):
                         counter = 0      
 
                         for k in PacingModes['VVI']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'DOO'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['DOO']:
                             if k == 1:
                                 userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
                             else:
