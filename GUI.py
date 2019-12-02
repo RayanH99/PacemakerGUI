@@ -2,8 +2,6 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 import serial
-import struct
-import time
 
 titleFont = ("Verdana", 12)
 
@@ -89,8 +87,11 @@ class LoginPage(tk.Frame):
 
         parameterRanges = ['30-50ppm (inc by 5ppm), 50-90ppm (inc by 1ppm), 90-175ppm (inc by 5ppm)', '50-175ppm (inc by 5ppm)', '50-175ppm (inc by 5ppm)', '70-300ms (inc by 10ms)',
                             'Off(0), 500-3200mV (inc by 100mV), 3500-7000mV (inc by 500mV)', 'Off(0), 500-3200mV (inc by 100mV), 3500-7000mV (inc by 500mV)',
-                            '0.05ms, 0.1-1.9ms (inc by 0.1ms)', '0.05ms, 0.1-1.9ms (inc by 0.1ms)', '0.25, 0.5, 0.75, 1.0-10mV (inc by 0.5mV)', '0.25, 0.5, 0.75, 1.0-10mV (inc by 0.5mV)',
-                            '150-500ms (inc by 10ms)', '150-500ms (inc by 10ms)', '150-500ms (inc by 10ms)', 'Off(0), 30-50ppm (inc by 5ppm), 50-90ppm (inc by 1ppm), 90-175ppm (inc by 5ppm)','Off(0), 3, 6, 9, 12, 15, 18, 21, 25', 'V-Low, Low, Med-Low, Med, Med-High, High, V-High', '10-50sec (inc by 10sec)', '1-16 (inc by 1)', '2-16min (inc by 1min)']
+                            '0.05ms (5), 0.1-1.9ms (inc by 0.1ms) (10-190)', '0.05ms (5), 0.1-1.9ms (inc by 0.1ms) (10-190)', '0.25 (25), 0.5 (50), 0.75 (75) , 1.0-10mV (inc by 0.5mV) (100-1000 in by 5)',
+                            '0.25 (25), 0.5 (50), 0.75 (75) , 1.0-10mV (inc by 0.5mV) (100-1000 in by 5)','150-500ms (inc by 10ms)', '150-500ms (inc by 10ms)',
+                            '150-500ms (inc by 10ms)', 'Off(0), 30-50ppm (inc by 5ppm), 50-90ppm (inc by 1ppm), 90-175ppm (inc by 5ppm)',
+                            'Off(0), 3, 6, 9, 12, 15, 18, 21, 25', 'V-Low, Low, Med-Low, Med, Med-High, High, V-High', 
+                            '10-50sec (inc by 10sec)', '1-16 (inc by 1)', '2-16min (inc by 1min)']
 
         tk.Label(self, text=" ").pack()
         tk.Label(self, text=" ").pack()
@@ -355,12 +356,12 @@ class afterLogin(tk.Frame):
             'Fixed AV Delay': [str(x) for x in range(70, 300, 10)],
             'Atrial Amplitude': ['O']+[str(x) for x in range(500, 3300, 100)]+[str(x) for x in range(3500, 7500, 500)],
             'Ventricular Amplitude': ['O']+[str(x) for x in range(500, 3300, 100)]+[str(x) for x in range(3500, 7500, 500)],
-            'Atrial Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 19, 1)],
-            'Ventricular Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 19, 1)],
-            'Atrial Sensitivity': ['0.25', '0.5', '0.75']+[str(x*0.1) for x in range(10, 105, 5)],
-            'Ventricular Sensitivity': ['0.25', '0.5', '0.75']+[str(x*0.1) for x in range(10, 105, 5)],
-            'VRP': [str(x) for x in range(150, 500, 10)],
-            'ARP': [str(x) for x in range(150, 500, 10)],
+            'Atrial Pulse Width': ['5']+[str(x) for x in range(10, 190, 1)],
+            'Ventricular Pulse Width': ['5']+[str(x) for x in range(10, 190, 1)],
+            'Atrial Sensitivity': ['25', '5', '75']+[str(x) for x in range(100, 1005, 5)],
+            'Ventricular Sensitivity': ['25', '5', '75']+[str(x) for x in range(100, 1005, 5)],
+            'VRP': [str(x) for x in range(150, 510, 10)],
+            'ARP': [str(x) for x in range(150, 510, 10)],
             'PVARP': [str(x) for x in range(150, 510, 10)],
             'Hysteresis': ['0']+[str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 90, 1)]+[str(x) for x in range(90, 180, 5)],
             'Rate Smoothing': ['0', '3', '6', '9', '12', '15', '18', '21', '25'],
@@ -385,6 +386,20 @@ class afterLogin(tk.Frame):
                 messagebox.showwarning("Error!", "Invalid parameter value! Check: " + dropList[i-1].cget("text"))
                 break
 
+
+        ####################################
+        ####### FUNCTION TO CONVERT ALL NUMS TO 8 BIT
+        ####################################
+    def __intConversion__(self, num, numOfBytes):
+        if num == None:
+            num = 0
+        num = int(num)
+        byte1 = (num & 0xff)
+        byte2 = ((num >> 8) & 0xff)
+        if (numOfBytes == 1):
+            return [byte1]
+        return [byte1, byte2]
+
     
         ####################################
         ####### ADDED SERIAL COMMUNICATION
@@ -392,12 +407,11 @@ class afterLogin(tk.Frame):
     def __serialCommunication__(self, *args):
         ##########################################################################################################################################################
         ## CHANGE COM PORT HERE
-        serialPacemaker = serial.Serial('INSERT SERIAL PORT HERE I.E. COM3', 115200) ## default baudrate for serial communication is 115200
+        serialPacemaker = serial.Serial('COM3', 115200) ## default baudrate for serial communication is 115200
 
-        serialPacemaker.isOpen()
         print("Serial port has been opened!")
 
-        time.sleep(2)
+       ## time.sleep(2)
 
         selectedPacingMode = dropOption.get()
         arrayToSend = userData[currentUser].parameters[selectedPacingMode]
@@ -446,18 +460,35 @@ class afterLogin(tk.Frame):
         else:
             ACTIVITY_THRESHOLD = 7
 
+        arrayToSend[14] = ACTIVITY_THRESHOLD
+        
         ##########################################################################################################################################################
         ## HAVE TO FIX THIS
-        arrayToSend = [22, 1, MODE]+arrayToSend
+        finalArray = [0x8, 0x8] ## pacing state + pacing mode + parameters
 
-        for i in range(3, 16):
-            arrayToSend[i] = float(arrayToSend[i])
-
-        for i in range(16, 21):
-            arrayToSend[i] = int(arrayToSend[i])
-
-        bytesToSend = struct.pack('BBBdddddddddddddBBBBB')
-        serialPacemaker.write(bytesToSend)
+        finalArray += self.__intConversion__(MODE,                1) ## pacing mode
+        finalArray += self.__intConversion__(arrayToSend[0],      1) ## LRL
+        finalArray += self.__intConversion__(arrayToSend[1],      1) ## URL
+        finalArray += self.__intConversion__(arrayToSend[2],      1) ## max sensor rate
+        finalArray += self.__intConversion__(arrayToSend[3],      2) ## fixed av delay
+        finalArray += self.__intConversion__(arrayToSend[4],      2) ## atr amp
+        finalArray += self.__intConversion__(arrayToSend[5],      2) ## vtr amp
+        finalArray += self.__intConversion__(arrayToSend[6],      1) ## atr pulse w
+        finalArray += self.__intConversion__(arrayToSend[7],      1) ## vtr pulse w
+        finalArray += self.__intConversion__(arrayToSend[8],      2) ## atr sens
+        finalArray += self.__intConversion__(arrayToSend[9],      2) ## vtr sens
+        finalArray += self.__intConversion__(arrayToSend[10],     2) ## vrp
+        finalArray += self.__intConversion__(arrayToSend[11],     2) ## arp
+        finalArray += self.__intConversion__(arrayToSend[12],     2) ## pvarp
+        finalArray += self.__intConversion__(arrayToSend[13],     1) ## hyst
+        finalArray += self.__intConversion__(arrayToSend[14],     1) ## rate smooth
+        finalArray += self.__intConversion__(arrayToSend[15],     1) ## activity thresh
+        finalArray += self.__intConversion__(arrayToSend[16],     1) ## react time
+        finalArray += self.__intConversion__(arrayToSend[17],     1) ## response factor
+        finalArray += self.__intConversion__(arrayToSend[18],     1) ## recovery time
+     
+        serialPacemaker.write(finalArray)
+        print(*finalArray)
         print("Data sent")
         serialPacemaker.close()
 
