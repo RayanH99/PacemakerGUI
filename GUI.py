@@ -74,9 +74,23 @@ class LoginPage(tk.Frame):
         password = tk.StringVar()
         global userData
         global parameters
-        ## Currently only storing 8 of the 18 parameters! Assignment 2 will expand on these params
-        parameters = ['Lower Rate Limit', 'Upper Rate Limit', 'Fixed AV Delay', 'Atrial Amplitude', 'Ventricular Amplitude', 'Atrial Pulse Width', 
-                      'Ventricular Pusle Width', 'VRP', 'ARP']
+        global parameterRanges
+
+        ## Storing 19 parameters
+        parameters = ['Lower Rate Limit', 'Upper Rate Limit', 'Maximum Sensor Rate', 'Fixed AV Delay',
+                      'Atrial Amplitude', 'Ventricular Amplitude', 'Atrial Pulse Width', 'Ventricular Pulse Width',
+                      'Atrial Sensitivity', 'Ventricular Sensitivity', 'VRP', 'ARP', 'PVARP', 'Hysteresis',
+                      'Rate Smoothing', 'Activity Threshold', 'Reaction Time', 'Response Factor', 'Recovery Time']
+
+        
+        ####################################
+        ####### STORING RANGES OF PARAMETERS
+        ####################################
+
+        parameterRanges = ['30-50ppm (inc by 5ppm), 50-90ppm (inc by 1ppm), 90-175ppm (inc by 5ppm)', '50-175ppm (inc by 5ppm)', '50-175ppm (inc by 5ppm)', '70-300ms (inc by 10ms)',
+                            'Off(0), 500-3200mV (inc by 100mV), 3500-7000mV (inc by 500mV)', 'Off(0), 500-3200mV (inc by 100mV), 3500-7000mV (inc by 500mV)',
+                            '0.05ms, 0.1-1.9ms (inc by 0.1ms)', '0.05ms, 0.1-1.9ms (inc by 0.1ms)', '0.25, 0.5, 0.75, 1.0-10mV (inc by 0.5mV)', '0.25, 0.5, 0.75, 1.0-10mV (inc by 0.5mV)',
+                            '150-500ms (inc by 10ms)', '150-500ms (inc by 10ms)', '150-500ms (inc by 10ms)', 'Off(0), 30-50ppm (inc by 5ppm), 50-90ppm (inc by 1ppm), 90-175ppm (inc by 5ppm)','Off(0), 3, 6, 9, 12, 15, 18, 21, 25', 'V-Low, Low, Med-Low, Med, Med-High, High, V-High', '10-50sec (inc by 10sec)', '1-16 (inc by 1)', '2-16min (inc by 1min)']
 
         tk.Label(self, text=" ").pack()
         tk.Label(self, text=" ").pack()
@@ -118,7 +132,6 @@ class LoginPage(tk.Frame):
                 userData[user] = createUser(user, password) ##create user object to store in database
 
             file.close()
-            #file = open("parametersData.txt", "r")
 
         return userData
 
@@ -139,6 +152,7 @@ class LoginPage(tk.Frame):
     def nextPage(self, next):
         self.controller.show_frame(next)
 
+
 class createUser():
   
   
@@ -149,11 +163,16 @@ class createUser():
 
         # multiply each pacing mode by 8 to be able to store each of the desired parameters
         self.parameters = {}
-        self.parameters['AOO'] = ['0']*9
-        self.parameters['VOO'] = ['0']*9
-        self.parameters['AAI'] = ['0']*9
-        self.parameters['VVI'] = ['0']*9
-        self.parameters['DOO'] = ['0']*9
+        self.parameters['AOO'] = ['0']*19
+        self.parameters['AAI'] = ['0']*19
+        self.parameters['VOO'] = ['0']*19
+        self.parameters['VVI'] = ['0']*19
+        self.parameters['DOO'] = ['0']*19
+        self.parameters['AOOR'] = ['0']*19
+        self.parameters['AAIR'] = ['0']*19
+        self.parameters['VOOR'] = ['0']*19
+        self.parameters['VVIR'] = ['0']*19
+        self.parameters['DOOR'] = ['0']*19
 
 
     def getUser(self):
@@ -251,6 +270,7 @@ class RegisterPage(tk.Frame):
 
         return True
 
+
 class afterLogin(tk.Frame):
 
 
@@ -260,11 +280,16 @@ class afterLogin(tk.Frame):
         self.controller = controller
         global PacingModes
         PacingModes = { 
-            'AOO': [1, 1, 0, 1, 0, 1, 0, 0, 0],
-            'VOO': [1, 1, 0, 0, 1, 0, 1, 0, 0],
-            'AAI': [1, 1, 0, 1, 0, 1, 0, 0, 1],
-            'VVI': [1, 1, 0, 0, 1, 0, 1, 1, 0],
-            'DOO': [1, 1, 1, 1, 1, 1, 1, 0, 0]
+            'AOO': [1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            'AAI': [1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+            'VOO': [1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            'VVI': [1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0],
+            'DOO': [1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            'AOOR': [1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], 
+            'AAIR': [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],         
+            'VOOR': [1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1],
+            'VVIR': [1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1],
+            'DOOR': [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
         }
 
         global dropOption
@@ -317,35 +342,56 @@ class afterLogin(tk.Frame):
                 counter += 1
                 rowIndex += 1
 
-    ##########################################################################################################################################################
-    ## FIX THIS AND ADD NOTIFICATION FOR INVALID PARAMETERS!!!
+    
+        ####################################
+        ####### ADDED MORE ERROR CHECKING FOR NEW PARAMETERS
+        ####################################
     def __getParams__(self, *args):
         global validParameters
         validParameters = {
-            'Lower Rate Limit': [str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 91, 1)]+[str(x) for x in range(90, 180, 5)],
+            'Lower Rate Limit': [str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 90, 1)]+[str(x) for x in range(90, 180, 5)],
             'Upper Rate Limit': [str(x) for x in range(50, 180, 5)],
+            'Maximum Sensor Rate': [str(x) for x in range(50, 180, 5)],
             'Fixed AV Delay': [str(x) for x in range(70, 300, 10)],
-            'Atrial Amplitude': ['O']+[str(x*0.1) for x in range(5, 36, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
-            'Ventricular Amplitude': ['O']+[str(x*0.1) for x in range(5, 33, 1)]+[str(x*0.1) for x in range(35, 75, 5)],
-            'Atrial Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 20, 1)],
-            'Ventricular Pusle Width': ['0.05']+[str(x*0.1) for x in range(1, 20, 1)],
+            'Atrial Amplitude': ['O']+[str(x) for x in range(500, 3300, 100)]+[str(x) for x in range(3500, 7500, 500)],
+            'Ventricular Amplitude': ['O']+[str(x) for x in range(500, 3300, 100)]+[str(x) for x in range(3500, 7500, 500)],
+            'Atrial Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 19, 1)],
+            'Ventricular Pulse Width': ['0.05']+[str(x*0.1) for x in range(1, 19, 1)],
+            'Atrial Sensitivity': ['0.25', '0.5', '0.75']+[str(x*0.1) for x in range(10, 105, 5)],
+            'Ventricular Sensitivity': ['0.25', '0.5', '0.75']+[str(x*0.1) for x in range(10, 105, 5)],
             'VRP': [str(x) for x in range(150, 500, 10)],
-            'ARP': [str(x) for x in range(150, 500, 10)]
+            'ARP': [str(x) for x in range(150, 500, 10)],
+            'PVARP': [str(x) for x in range(150, 510, 10)],
+            'Hysteresis': ['0']+[str(x) for x in range(30, 55, 5)]+[str(x) for x in range(50, 90, 1)]+[str(x) for x in range(90, 180, 5)],
+            'Rate Smoothing': ['0', '3', '6', '9', '12', '15', '18', '21', '25'],
+            'Activity Threshold': ['V-Low', 'Low', 'Med-Low', 'Med', 'Med-High', 'High', 'V-High'],
+            'Reaction Time': [str(x) for x in range(10, 60, 10)],
+            'Response Factor': [str(x) for x in range(1, 17, 1)],
+            'Recovery Time': [str(x) for x in range(2, 17, 1)]
         }
 
         mode = dropOption.get()
         
-        for i in range(1, len(dropList), 2):
+        
+        ####################################
+        ####### ADDED A WAY TO INFORM USER WHICH VALUE IS INCORRECT
+        ####################################
+
+        for i in range(1, len(dropList), 3):
             if(dropList[i].get() in validParameters[dropList[i-1]['text']]):
                 userData[currentUser].parameters[mode][parameters.index(dropList[i-1]['text'])] = dropList[i].get()
                 currentDropList[i].config(text=str(dropList[i].get()))
             else:
-                messagebox.showwarning("Error!", "Invalid parameter values!")
+                messagebox.showwarning("Error!", "Invalid parameter value! Check: " + dropList[i-1].cget("text"))
                 break
 
-    ##########################################################################################################################################################
+    
+        ####################################
+        ####### ADDED SERIAL COMMUNICATION
+        ####################################
     def __serialCommunication__(self, *args):
-
+        ##########################################################################################################################################################
+        ## CHANGE COM PORT HERE
         serialPacemaker = serial.Serial('INSERT SERIAL PORT HERE I.E. COM3', 115200) ## default baudrate for serial communication is 115200
 
         serialPacemaker.isOpen()
@@ -356,18 +402,49 @@ class afterLogin(tk.Frame):
         selectedPacingMode = dropOption.get()
         arrayToSend = userData[currentUser].parameters[selectedPacingMode]
         tempMode = selectedPacingMode
+        activity = arrayToSend[14]
+
+        ACTIVITY_THRESHOLD = 0
         
         # set integer value for selected pacing mode
         if tempMode == "AOO":
             MODE = 1
-        elif tempMode == "VOO":
-            MODE = 2
         elif tempMode == "AAI":
+            MODE = 2
+        elif tempMode == "VOO":
             MODE = 3
         elif tempMode == "VVI":
             MODE = 4
         elif tempMode == "DOO":
             MODE = 5
+        elif tempMode == "AOOR":
+            MODE = 6
+        elif tempMode == "AAIR":
+            MODE = 7
+        elif tempMode == "VOOR":
+            MODE = 8
+        elif tempMode == "VVIR":
+            MODE = 9
+        elif tempMode == "DOOR":
+            MODE = 10
+        else:
+            MODE = 11
+
+        #set integer value for activity threshold parameter
+        if activity == "V-Low":
+            ACTIVITY_THRESHOLD = 1
+        elif activity == "Low":
+            ACTIVITY_THRESHOLD = 2
+        elif activity == "Low-Med":
+            ACTIVITY_THRESHOLD = 3
+        elif activity == "Med":
+            ACTIVITY_THRESHOLD = 4
+        elif activity == "Med-High":
+            ACTIVITY_THRESHOLD = 5
+        elif activity == "High":
+            ACTIVITY_THRESHOLD = 6
+        else:
+            ACTIVITY_THRESHOLD = 7
 
         ##########################################################################################################################################################
         ## HAVE TO FIX THIS
@@ -415,9 +492,16 @@ class afterLogin(tk.Frame):
                 dropList[counter].grid(row=rowIndex, column=1)
 
                 counter += 1
+
+                dropList.append(tk.Label(self, text=parameterRanges[i]))
+                dropList[counter].grid(row=rowIndex, column=2)
+
+                counter +=1 
                 rowIndex += 1
 
-        ##########################################################################################################################################################
+        ####################################
+        ####### ADDED SECTION TO KEEP TRACK OF PARAMETER VALUES
+        ####################################
         rowIndex += 1
         counter = 0
 
@@ -432,7 +516,7 @@ class afterLogin(tk.Frame):
         counter += 1
         rowIndex += 1
 
-        for i in range(len(parameters)):  # set new parameters
+        for i in range(len(parameters)):  # keep track of new parameters
             if(PacingModes[selectedPacingMode][i] == 1):
 
                 currentDropList.append(tk.Label(self, text=parameters[i]))
@@ -474,22 +558,22 @@ class afterLogin(tk.Frame):
                                 userData[currentUser].userOutput += "0,"
                             counter += 1
 
-                    elif(mode == 'VOO'):
+                    elif(mode == 'AAI'):
                         userData[currentUser].userOutput += mode+","
                         counter = 0
                         
-                        for k in PacingModes['VOO']:
+                        for k in PacingModes['AAI']:
                             if k == 1:
                                 userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
                             else:
                                 userData[currentUser].userOutput += "0,"
                             counter += 1
 
-                    elif(mode == 'AAI'):
+                    elif(mode == 'VOO'):
                         userData[currentUser].userOutput += mode+","
                         counter = 0
                         
-                        for k in PacingModes['AAI']:
+                        for k in PacingModes['VOO']:
                             if k == 1:
                                 userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
                             else:
@@ -517,8 +601,64 @@ class afterLogin(tk.Frame):
                             else:
                                 userData[currentUser].userOutput += "0,"
                             counter += 1
-        
+
+                    elif(mode == 'AOOR'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['AOOR']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'AAIR'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['AAIR']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'VOOR'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['VOOR']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'VVIR'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['VVIR']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
+                    elif(mode == 'DOOR'):
+                        userData[currentUser].userOutput += mode+","
+                        counter = 0      
+
+                        for k in PacingModes['DOOR']:
+                            if k == 1:
+                                userData[currentUser].userOutput += userData[currentUser].parameters[mode][counter]+","
+                            else:
+                                userData[currentUser].userOutput += "0,"
+                            counter += 1
+
         self.__storeParamsData__()
+        messagebox.showwarning("Success", "Data has been updated!")
     
 GUI().mainloop()
         
