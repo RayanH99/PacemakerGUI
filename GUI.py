@@ -111,8 +111,6 @@ class LoginPage(tk.Frame):
         button2 = tk.Button(self, text="Register", width=15, height=3, command=lambda: controller.show_frame(RegisterPage))
         button2.pack(padx=30, pady=10)
 
-        ## add next page ref
-
 
     def __Reference__(self):
         global userData
@@ -405,7 +403,6 @@ class afterLogin(tk.Frame):
         ####### ADDED SERIAL COMMUNICATION
         ####################################
     def __serialCommunication__(self, *args):
-        ##########################################################################################################################################################
         ## CHANGE COM PORT HERE
         serialPacemaker = serial.Serial('COM3', 115200) ## default baudrate for serial communication is 115200
 
@@ -461,10 +458,8 @@ class afterLogin(tk.Frame):
             ACTIVITY_THRESHOLD = 7
 
         arrayToSend[14] = ACTIVITY_THRESHOLD
-        
-        ##########################################################################################################################################################
-        ## HAVE TO FIX THIS
-        finalArray = [0x8, 0x8] ## pacing state + pacing mode + parameters
+
+        finalArray = [0x8, 0x8] ## header for serial data
 
         finalArray += self.__intConversion__(MODE,                1) ## pacing mode
         finalArray += self.__intConversion__(arrayToSend[0],      1) ## LRL
@@ -491,8 +486,6 @@ class afterLogin(tk.Frame):
         print(*finalArray)
         print("Data sent")
         serialPacemaker.close()
-
-        ##########################################################################################################################################################
 
 
     def __List__(self, *args):
@@ -690,6 +683,5 @@ class afterLogin(tk.Frame):
 
         self.__storeParamsData__()
         messagebox.showwarning("Success", "Data has been updated!")
-    
 GUI().mainloop()
         
